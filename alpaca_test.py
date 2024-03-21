@@ -1,3 +1,6 @@
+import sys
+sys.stdout = open('output.txt', 'a')
+
 from alpaca.data.timeframe import TimeFrame
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest
@@ -65,56 +68,57 @@ if is_market_open():
     now = datetime.now(us_eastern)
     print("Current Time (US Eastern):", now)
 
-    market_close_time = datetime.now(pytz.timezone('America/New_York')).replace(hour=16, minute=0, second=0, microsecond=0)
-    if market_close_time - now <= timedelta(minutes=5):
+    market_close_time = now.replace(hour=16, minute=0, second=0, microsecond=0)
+    if market_close_time - now <= timedelta(minutes=10):
         print("Closing all positions...")
         close_all_positions()
+        
     else:
         print("Market will close in more than 5 minutes. No action taken.")
 
-    three_hours_ago = now - timedelta(hours=3)
-    two_hours_ago = now - timedelta(hours=2)
-    one_hours_ago = now - timedelta(hours=1)
+        three_hours_ago = now - timedelta(hours=3)
+        two_hours_ago = now - timedelta(hours=2)
+        one_hours_ago = now - timedelta(hours=1)
 
-    symbol = "SPY"
-    date_list = [one_hours_ago, two_hours_ago, three_hours_ago]
-    price_list = []
+        symbol = "SPY"
+        date_list = [one_hours_ago, two_hours_ago, three_hours_ago]
+        price_list = []
 
-    for i in date_list:
-        closing_price = get_close_price(i,symbol)
-        print(f"Closing price for {symbol} on {i}: {closing_price}")
-        price_list.append(closing_price)
+        for i in date_list:
+            closing_price = get_close_price(i,symbol)
+            print(f"Closing price for {symbol} on {i}: {closing_price}")
+            price_list.append(closing_price)
 
-    print(price_list)
+        print(price_list)
 
-    # Check if they are sequentially decreasing
-    long = are_sequentially_decreasing(price_list)
-    short = are_sequentially_increasing(price_list)
-    print(long, short)  # Output will be True
-    trade = False
+        # Check if they are sequentially decreasing
+        long = are_sequentially_decreasing(price_list)
+        short = are_sequentially_increasing(price_list)
+        print(long, short)  # Output will be True
+        trade = False
 
-    if long:
-        trade = True
-        market_order_data = MarketOrderRequest(
-            symbol="SPY",
-            qty=1,
-            side=OrderSide.BUY,
-            time_in_force=TimeInForce.DAY
-        )
-    elif short:
-        trade = True
-        market_order_data = MarketOrderRequest(
-            symbol="SPY",
-            qty=1,
-            side=OrderSide.SELL,
-            time_in_force=TimeInForce.DAY
-        )
-        
-    if trade:
-        market_order = trading_client.submit_order(market_order_data)
-        print(market_order)
-    else:
-        print("No trade supported")
+        if long:
+            trade = True
+            market_order_data = MarketOrderRequest(
+                symbol="SPY",
+                qty=1,
+                side=OrderSide.BUY,
+                time_in_force=TimeInForce.DAY
+            )
+        elif short:
+            trade = True
+            market_order_data = MarketOrderRequest(
+                symbol="SPY",
+                qty=1,
+                side=OrderSide.SELL,
+                time_in_force=TimeInForce.DAY
+            )
+            
+        if trade:
+            market_order = trading_client.submit_order(market_order_data)
+            print(market_order)
+        else:
+            print("No trade supported")
 
 else:
     print("The market is currently closed.")
